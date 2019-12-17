@@ -37,27 +37,28 @@ import android.media.CamcorderProfile;
 import android.media.Image;
 import android.media.ImageReader;
 import android.media.MediaRecorder;
-import androidx.annotation.NonNull;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.util.SparseIntArray;
 import android.view.Surface;
-import android.os.Handler;
-import android.os.Looper;
+
+import androidx.annotation.NonNull;
 
 import com.facebook.react.bridge.ReadableMap;
+
+import org.reactnative.camera.utils.ObjectUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 import java.util.SortedSet;
-
-import org.reactnative.camera.utils.ObjectUtils;
 
 
 
@@ -132,6 +133,7 @@ class Camera2 extends CameraViewImpl implements MediaRecorder.OnInfoListener, Me
             updateFlash();
             updateFocusDepth();
             updateWhiteBalance();
+            updateColorEffect();
             updateZoom();
             try {
                 mCaptureSession.setRepeatingRequest(mPreviewRequestBuilder.build(),
@@ -259,6 +261,8 @@ class Camera2 extends CameraViewImpl implements MediaRecorder.OnInfoListener, Me
     private float mZoom;
 
     private int mWhiteBalance;
+
+    private int mColorEffect;
 
     private boolean mIsScanning;
 
@@ -666,6 +670,29 @@ class Camera2 extends CameraViewImpl implements MediaRecorder.OnInfoListener, Me
     @Override
     public int getWhiteBalance() {
         return mWhiteBalance;
+    }
+
+    @Override
+    public void setColorEffect(int colorEffect) {
+        if (mColorEffect == colorEffect) {
+            return;
+        }
+        int saved = mColorEffect;
+        mColorEffect = colorEffect;
+        if (mCaptureSession != null) {
+            updateColorEffect();
+            try {
+                mCaptureSession.setRepeatingRequest(mPreviewRequestBuilder.build(),
+                        mCaptureCallback, null);
+            } catch (CameraAccessException e) {
+                mColorEffect = saved;  // Revert
+            }
+        }
+    }
+
+    @Override
+    public int getColorEffect() {
+        return mColorEffect;
     }
 
     @Override
@@ -1115,6 +1142,17 @@ class Camera2 extends CameraViewImpl implements MediaRecorder.OnInfoListener, Me
             case Constants.WB_SUNNY:
                 mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AWB_MODE,
                     CaptureRequest.CONTROL_AWB_MODE_DAYLIGHT);
+                break;
+        }
+    }
+
+    void updateColorEffect() {
+        switch (mColorEffect) {
+            case Constants.CE_OFF:
+                mPreviewRequestBuilder.set(CaptureRequest.CONTROL_EFFECT_MODE, CaptureRequest.CONTROL_EFFECT_MODE_OFF);
+                break;
+            case Constants.CE_MONO:
+                mPreviewRequestBuilder.set(CaptureRequest.CONTROL_EFFECT_MODE, CaptureRequest.CONTROL_EFFECT_MODE_MONO);
                 break;
         }
     }

@@ -45,4 +45,7 @@ public interface Constants {
   int ORIENTATION_DOWN = 2;
   int ORIENTATION_LEFT = 3;
   int ORIENTATION_RIGHT = 4;
+
+  int CE_OFF = 0;
+  int CE_MONO = 1;
 }

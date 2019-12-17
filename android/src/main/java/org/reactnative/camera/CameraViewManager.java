@@ -122,6 +122,11 @@ public class CameraViewManager extends ViewGroupManager<RNCameraView> {
     view.setWhiteBalance(whiteBalance);
   }
 
+  @ReactProp(name = "colorEffect")
+  public void setColorEffect(RNCameraView view, int colorEffect) {
+    view.setColorEffect(colorEffect);
+  }
+
   @ReactProp(name = "pictureSize")
   public void setPictureSize(RNCameraView view, String size) {
     view.setPictureSize(size.equals("None") ? null : Size.parse(size));

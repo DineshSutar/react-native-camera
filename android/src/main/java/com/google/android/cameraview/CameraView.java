@@ -250,6 +250,7 @@ public class CameraView extends FrameLayout {
         state.focusDepth = getFocusDepth();
         state.zoom = getZoom();
         state.whiteBalance = getWhiteBalance();
+        state.colorEffect = getColorEffect();
         state.scanning = getScanning();
         state.pictureSize = getPictureSize();
         return state;
@@ -272,6 +273,7 @@ public class CameraView extends FrameLayout {
         setFocusDepth(ss.focusDepth);
         setZoom(ss.zoom);
         setWhiteBalance(ss.whiteBalance);
+        setColorEffect(ss.colorEffect);
         setScanning(ss.scanning);
         setPictureSize(ss.pictureSize);
     }
@@ -579,6 +581,14 @@ public class CameraView extends FrameLayout {
       return mImpl.getWhiteBalance();
     }
 
+    public void setColorEffect(int colorEffect) {
+        mImpl.setColorEffect(colorEffect);
+    }
+
+    public int getColorEffect() {
+        return mImpl.getColorEffect();
+    }
+
     public void setScanning(boolean isScanning) { mImpl.setScanning(isScanning);}
 
     public boolean getScanning() { return mImpl.getScanning(); }
@@ -714,6 +724,8 @@ public class CameraView extends FrameLayout {
 
         int whiteBalance;
 
+        int colorEffect;
+
         boolean scanning;
 
         Size pictureSize;
@@ -730,6 +742,7 @@ public class CameraView extends FrameLayout {
             focusDepth = source.readFloat();
             zoom = source.readFloat();
             whiteBalance = source.readInt();
+            colorEffect = source.readInt();
             scanning = source.readByte() != 0;
             pictureSize = source.readParcelable(loader);
         }

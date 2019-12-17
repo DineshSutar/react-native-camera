@@ -24,11 +24,14 @@ import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
 import android.os.Build;
 import android.os.Handler;
-import androidx.collection.SparseArrayCompat;
 import android.util.Log;
 import android.view.SurfaceHolder;
 
+import androidx.collection.SparseArrayCompat;
+
 import com.facebook.react.bridge.ReadableMap;
+
+import org.reactnative.camera.utils.ObjectUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,8 +41,6 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import org.reactnative.camera.utils.ObjectUtils;
 
 
 @SuppressWarnings("deprecation")
@@ -67,6 +68,13 @@ class Camera1 extends CameraViewImpl implements MediaRecorder.OnInfoListener,
       WB_MODES.put(Constants.WB_SHADOW, Camera.Parameters.WHITE_BALANCE_SHADE);
       WB_MODES.put(Constants.WB_FLUORESCENT, Camera.Parameters.WHITE_BALANCE_FLUORESCENT);
       WB_MODES.put(Constants.WB_INCANDESCENT, Camera.Parameters.WHITE_BALANCE_INCANDESCENT);
+    }
+
+    private static final SparseArrayCompat<String> CE_MODES = new SparseArrayCompat<>();
+
+    static {
+        CE_MODES.put(Constants.CE_OFF, Camera.Parameters.EFFECT_NONE);
+        CE_MODES.put(Constants.CE_MONO, Camera.Parameters.EFFECT_MONO);
     }
 
     private static final int FOCUS_AREA_SIZE_DEFAULT = 300;
@@ -120,6 +128,8 @@ class Camera1 extends CameraViewImpl implements MediaRecorder.OnInfoListener,
     private float mZoom;
 
     private int mWhiteBalance;
+
+    private int mColorEffect;
 
     private boolean mIsScanning;
 
@@ -600,6 +610,28 @@ class Camera1 extends CameraViewImpl implements MediaRecorder.OnInfoListener,
     }
 
     @Override
+    public void setColorEffect(int colorEffect) {
+        if (colorEffect == mColorEffect) {
+            return;
+        }
+        if (setColorEffectInternal(colorEffect)) {
+            try{
+                if(mCamera != null){
+                    mCamera.setParameters(mCameraParameters);
+                }
+            }
+            catch(RuntimeException e ) {
+                Log.e("CAMERA_1::", "setParameters failed", e);
+            }
+        }
+    }
+
+    @Override
+    public int getColorEffect() {
+        return mColorEffect;
+    }
+
+    @Override
     void setScanning(boolean isScanning) {
         if (isScanning == mIsScanning) {
             return;
@@ -989,6 +1021,7 @@ class Camera1 extends CameraViewImpl implements MediaRecorder.OnInfoListener,
         setAspectRatio(mAspectRatio);
         setZoomInternal(mZoom);
         setWhiteBalanceInternal(mWhiteBalance);
+        setColorEffectInternal(mColorEffect);
         setScanningInternal(mIsScanning);
         try{
             mCamera.setParameters(mCameraParameters);
@@ -1349,6 +1382,26 @@ class Camera1 extends CameraViewImpl implements MediaRecorder.OnInfoListener,
             String currentMode = WB_MODES.get(mWhiteBalance);
             if (modes == null || !modes.contains(currentMode)) {
                 mCameraParameters.setWhiteBalance(Camera.Parameters.WHITE_BALANCE_AUTO);
+                return true;
+            }
+            return false;
+        } else {
+            return false;
+        }
+    }
+
+    private boolean setColorEffectInternal(int colorEffect) {
+        mColorEffect = colorEffect;
+        if (isCameraOpened()) {
+            final List<String> modes = mCameraParameters.getSupportedColorEffects();
+            String mode = CE_MODES.get(colorEffect);
+            if (modes != null && modes.contains(mode)) {
+                mCameraParameters.setColorEffect(mode);
+                return true;
+            }
+            String currentMode = CE_MODES.get(mColorEffect);
+            if (modes == null || !modes.contains(currentMode)) {
+                mCameraParameters.setColorEffect(Camera.Parameters.EFFECT_NONE);
                 return true;
             }
             return false;
