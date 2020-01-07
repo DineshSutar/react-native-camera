@@ -13,15 +13,9 @@
 
 RCT_EXPORT_MODULE(RNCameraManager);
 RCT_EXPORT_VIEW_PROPERTY(onCameraReady, RCTDirectEventBlock);
-RCT_EXPORT_VIEW_PROPERTY(onAudioInterrupted, RCTDirectEventBlock);
-RCT_EXPORT_VIEW_PROPERTY(onAudioConnected, RCTDirectEventBlock);
 RCT_EXPORT_VIEW_PROPERTY(onMountError, RCTDirectEventBlock);
-RCT_EXPORT_VIEW_PROPERTY(onBarCodeRead, RCTDirectEventBlock);
-RCT_EXPORT_VIEW_PROPERTY(onFacesDetected, RCTDirectEventBlock);
-RCT_EXPORT_VIEW_PROPERTY(onGoogleVisionBarcodesDetected, RCTDirectEventBlock);
 RCT_EXPORT_VIEW_PROPERTY(onPictureTaken, RCTDirectEventBlock);
 RCT_EXPORT_VIEW_PROPERTY(onPictureSaved, RCTDirectEventBlock);
-RCT_EXPORT_VIEW_PROPERTY(onTextRecognized, RCTDirectEventBlock);
 RCT_EXPORT_VIEW_PROPERTY(onSubjectAreaChanged, RCTDirectEventBlock);
 
 + (BOOL)requiresMainQueueSetup
@@ -55,81 +49,19 @@ RCT_EXPORT_VIEW_PROPERTY(onSubjectAreaChanged, RCTDirectEventBlock);
                      @"incandescent" : @(RNCameraWhiteBalanceIncandescent),
                      @"fluorescent" : @(RNCameraWhiteBalanceFluorescent)
                      },
-             @"VideoQuality": @{
-                     @"2160p": @(RNCameraVideo2160p),
-                     @"1080p": @(RNCameraVideo1080p),
-                     @"720p": @(RNCameraVideo720p),
-                     @"480p": @(RNCameraVideo4x3),
-                     @"4:3": @(RNCameraVideo4x3),
-                     @"288p": @(RNCameraVideo288p),
-                     },
              @"Orientation": @{
                      @"auto": @(RNCameraOrientationAuto),
                      @"landscapeLeft": @(RNCameraOrientationLandscapeLeft),
                      @"landscapeRight": @(RNCameraOrientationLandscapeRight),
                      @"portrait": @(RNCameraOrientationPortrait),
                      @"portraitUpsideDown": @(RNCameraOrientationPortraitUpsideDown)
-                     },
-             @"VideoCodec": [[self class] validCodecTypes],
-             @"BarCodeType" : [[self class] validBarCodeTypes],
-             @"FaceDetection" : [[self class] faceDetectorConstants],
-             @"VideoStabilization": [[self class] validVideoStabilizationModes],
-             @"GoogleVisionBarcodeDetection": @{
-                 @"BarcodeType": [[self class] barcodeDetectorConstants],
-             }
+                     }
              };
 }
 
 - (NSArray<NSString *> *)supportedEvents
 {
-    return @[@"onCameraReady", @"onMountError", @"onBarCodeRead", @"onFacesDetected", @"onPictureTaken", @"onPictureSaved", @"onTextRecognized", @"onGoogleVisionBarcodesDetected", @"onSubjectAreaChanged"];
-}
-
-+ (NSDictionary *)validCodecTypes
-{
-    if (@available(iOS 11, *)) {
-        return @{
-                 @"H264": AVVideoCodecTypeH264,
-                 @"HVEC": AVVideoCodecTypeHEVC,
-                 @"JPEG": AVVideoCodecTypeJPEG,
-                 @"AppleProRes422": AVVideoCodecTypeAppleProRes422,
-                 @"AppleProRes4444": AVVideoCodecTypeAppleProRes4444
-                 };
-    } else {
-        return @{
-                 @"H264": AVVideoCodecH264,
-                 @"JPEG": AVVideoCodecJPEG
-                 };
-    }
-}
-
-+ (NSDictionary *)validVideoStabilizationModes
-{
-    return @{
-             @"off": @(AVCaptureVideoStabilizationModeOff),
-             @"standard": @(AVCaptureVideoStabilizationModeStandard),
-             @"cinematic": @(AVCaptureVideoStabilizationModeCinematic),
-             @"auto": @(AVCaptureVideoStabilizationModeAuto)
-             };
-}
-
-+ (NSDictionary *)validBarCodeTypes
-{
-    return @{
-             @"upc_e" : AVMetadataObjectTypeUPCECode,
-             @"code39" : AVMetadataObjectTypeCode39Code,
-             @"code39mod43" : AVMetadataObjectTypeCode39Mod43Code,
-             @"ean13" : AVMetadataObjectTypeEAN13Code,
-             @"ean8" : AVMetadataObjectTypeEAN8Code,
-             @"code93" : AVMetadataObjectTypeCode93Code,
-             @"code128" : AVMetadataObjectTypeCode128Code,
-             @"pdf417" : AVMetadataObjectTypePDF417Code,
-             @"qr" : AVMetadataObjectTypeQRCode,
-             @"aztec" : AVMetadataObjectTypeAztecCode,
-             @"interleaved2of5" : AVMetadataObjectTypeInterleaved2of5Code,
-             @"itf14" : AVMetadataObjectTypeITF14Code,
-             @"datamatrix" : AVMetadataObjectTypeDataMatrixCode
-             };
+    return @[@"onCameraReady", @"onMountError", @"onPictureTaken", @"onPictureSaved", @"onSubjectAreaChanged"];
 }
 
 + (NSDictionary *)pictureSizes
@@ -146,24 +78,6 @@ RCT_EXPORT_VIEW_PROPERTY(onSubjectAreaChanged, RCTDirectEventBlock);
              @"Low" : AVCaptureSessionPresetLow,
              @"None": @(-1),
              };
-}
-
-+ (NSDictionary *)faceDetectorConstants
-{
-#if __has_include(<FirebaseMLVision/FirebaseMLVision.h>)
-    return [FaceDetectorManagerMlkit constants];
-#else
-    return [NSDictionary new];
-#endif
-}
-
-+ (NSDictionary *)barcodeDetectorConstants
-{
-#if __has_include(<FirebaseMLVision/FirebaseMLVision.h>)
-    return [BarcodeDetectorManagerMlkit constants];
-#else
-    return [NSDictionary new];
-#endif
 }
 
 RCT_CUSTOM_VIEW_PROPERTY(type, NSInteger, RNCamera)
@@ -242,85 +156,6 @@ RCT_CUSTOM_VIEW_PROPERTY(pictureSize, NSString *, RNCamera)
     [view updatePictureSize];
 }
 
-
-RCT_CUSTOM_VIEW_PROPERTY(faceDetectorEnabled, BOOL, RNCamera)
-{
-    view.canDetectFaces = [RCTConvert BOOL:json];
-    [view setupOrDisableFaceDetector];
-}
-
-RCT_CUSTOM_VIEW_PROPERTY(trackingEnabled, BOOL, RNCamera)
-{
-    [view updateTrackingEnabled:json];
-}
-
-RCT_CUSTOM_VIEW_PROPERTY(faceDetectionMode, NSInteger, RNCamera)
-{
-    [view updateFaceDetectionMode:json];
-}
-
-RCT_CUSTOM_VIEW_PROPERTY(faceDetectionLandmarks, NSString, RNCamera)
-{
-    [view updateFaceDetectionLandmarks:json];
-}
-
-RCT_CUSTOM_VIEW_PROPERTY(faceDetectionClassifications, NSString, RNCamera)
-{
-    [view updateFaceDetectionClassifications:json];
-}
-
-RCT_CUSTOM_VIEW_PROPERTY(barCodeScannerEnabled, BOOL, RNCamera)
-{
-
-    view.isReadingBarCodes = [RCTConvert BOOL:json];
-    [view setupOrDisableBarcodeScanner];
-}
-
-RCT_CUSTOM_VIEW_PROPERTY(barCodeTypes, NSArray, RNCamera)
-{
-    [view setBarCodeTypes:[RCTConvert NSArray:json]];
-}
-
-RCT_CUSTOM_VIEW_PROPERTY(googleVisionBarcodeType, NSString, RNCamera)
-{
-    [view updateGoogleVisionBarcodeType:json];
-}
-
-RCT_CUSTOM_VIEW_PROPERTY(googleVisionBarcodeDetectorEnabled, BOOL, RNCamera)
-{
-    view.canDetectBarcodes = [RCTConvert BOOL:json];
-    [view setupOrDisableBarcodeDetector];
-}
-
-RCT_CUSTOM_VIEW_PROPERTY(textRecognizerEnabled, BOOL, RNCamera)
-{
-
-    view.canReadText = [RCTConvert BOOL:json];
-    [view setupOrDisableTextDetector];
-}
-
-RCT_CUSTOM_VIEW_PROPERTY(captureAudio, BOOL, RNCamera)
-{
-    [view setCaptureAudio:[RCTConvert BOOL:json]];
-    [view updateCaptureAudio];
-}
-
-RCT_CUSTOM_VIEW_PROPERTY(keepAudioSession, BOOL, RNCamera)
-{
-    [view setKeepAudioSession:[RCTConvert BOOL:json]];
-}
-
-RCT_CUSTOM_VIEW_PROPERTY(rectOfInterest, CGRect, RNCamera)
-{
-    [view setRectOfInterest: [RCTConvert CGRect:json]];
-    [view updateRectOfInterest];
-}
-
-RCT_CUSTOM_VIEW_PROPERTY(defaultVideoQuality, NSInteger, RNCamera)
-{
-    [view setDefaultVideoQuality: [NSNumber numberWithInteger:[RCTConvert NSInteger:json]]];
-}
-
 RCT_REMAP_METHOD(takePicture,
                  options:(NSDictionary *)options
                  reactTag:(nonnull NSNumber *)reactTag
@@ -365,26 +200,6 @@ RCT_REMAP_METHOD(takePicture,
     }];
 }
 
-RCT_REMAP_METHOD(record,
-                 withOptions:(NSDictionary *)options
-                 reactTag:(nonnull NSNumber *)reactTag
-                 resolver:(RCTPromiseResolveBlock)resolve
-                 rejecter:(RCTPromiseRejectBlock)reject)
-{
-#if TARGET_IPHONE_SIMULATOR
-    reject(@"E_RECORDING_FAILED", @"Video recording is not supported on a simulator.", nil);
-    return;
-#endif
-    [self.bridge.uiManager addUIBlock:^(__unused RCTUIManager *uiManager, NSDictionary<NSNumber *, RNCamera *> *viewRegistry) {
-        RNCamera *view = viewRegistry[reactTag];
-        if (![view isKindOfClass:[RNCamera class]]) {
-            RCTLogError(@"Invalid view returned from registry, expecting RNCamera, got: %@", view);
-        } else {
-            [view record:options resolve:resolve reject:reject];
-        }
-    }];
-}
-
 RCT_EXPORT_METHOD(resumePreview:(nonnull NSNumber *)reactTag)
 {
 #if TARGET_IPHONE_SIMULATOR
@@ -411,18 +226,6 @@ RCT_EXPORT_METHOD(pausePreview:(nonnull NSNumber *)reactTag)
             RCTLogError(@"Invalid view returned from registry, expecting RNCamera, got: %@", view);
         } else {
             [view pausePreview];
-        }
-    }];
-}
-
-RCT_REMAP_METHOD(stopRecording, reactTag:(nonnull NSNumber *)reactTag)
-{
-    [self.bridge.uiManager addUIBlock:^(__unused RCTUIManager *uiManager, NSDictionary<NSNumber *, RNCamera *> *viewRegistry) {
-        RNCamera *view = viewRegistry[reactTag];
-        if (![view isKindOfClass:[RNCamera class]]) {
-            RCTLogError(@"Invalid view returned from registry, expecting RNCamera, got: %@", view);
-        } else {
-            [view stopRecording];
         }
     }];
 }
@@ -459,23 +262,6 @@ RCT_EXPORT_METHOD(checkVideoAuthorizationStatus:(RCTPromiseResolveBlock)resolve
     }];
 }
 
-RCT_EXPORT_METHOD(checkRecordAudioAuthorizationStatus:(RCTPromiseResolveBlock)resolve
-                  reject:(__unused RCTPromiseRejectBlock)reject) {
-    if ([[NSBundle mainBundle].infoDictionary objectForKey:@"NSMicrophoneUsageDescription"] == nil) {
-        RCTLogWarn(@"Checking audio permissions without having key 'NSMicrophoneUsageDescription' defined in your Info.plist. Audio Recording for your video files is therefore disabled. If you do not need audio on your recordings is is recommended to set the 'captureAudio' property on your component instance to 'false', otherwise you will have to add the key 'NSMicrophoneUsageDescription' to your Info.plist. If you do not your app will crash when being built in release mode. You can learn more about adding permissions here: https://stackoverflow.com/a/38498347/4202031");
-        resolve(@(NO));
-        return;
-    } else {
-#ifdef DEBUG
-        [[AVAudioSession sharedInstance] requestRecordPermission:^(BOOL granted) {
-            resolve(@(granted));
-        }];
-#else
-        resolve(@(YES));
-#endif
-    }
-}
-
 RCT_REMAP_METHOD(getAvailablePictureSizes,
                  ratio:(NSString *)ratio
                  reactTag:(nonnull NSNumber *)reactTag
@@ -483,23 +269,6 @@ RCT_REMAP_METHOD(getAvailablePictureSizes,
                  rejecter:(RCTPromiseRejectBlock)reject)
 {
     resolve([[[self class] pictureSizes] allKeys]);
-}
-
-RCT_EXPORT_METHOD(isRecording:(nonnull NSNumber *)reactTag
-                 resolver:(RCTPromiseResolveBlock)resolve
-                 rejecter:(RCTPromiseRejectBlock)reject) {
-    #if TARGET_IPHONE_SIMULATOR
-        reject(@"E_IS_RECORDING_FAILED", @"Video recording is not supported on a simulator.", nil);
-        return;
-    #endif
-        [self.bridge.uiManager addUIBlock:^(__unused RCTUIManager *uiManager, NSDictionary<NSNumber *, RNCamera *> *viewRegistry) {
-            RNCamera *view = viewRegistry[reactTag];
-            if (![view isKindOfClass:[RNCamera class]]) {
-                RCTLogError(@"Invalid view returned from registry, expecting RNCamera, got: %@", view);
-            } else {
-                resolve(@([view isRecording]));
-            }
-        }];
 }
 
 RCT_EXPORT_METHOD(getCameraIds:(RCTPromiseResolveBlock)resolve

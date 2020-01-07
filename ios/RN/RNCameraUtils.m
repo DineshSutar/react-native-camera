@@ -82,24 +82,6 @@
     }
 }
 
-+ (NSString *)captureSessionPresetForVideoResolution:(RNCameraVideoResolution)resolution
-{
-    switch (resolution) {
-        case RNCameraVideo2160p:
-            return AVCaptureSessionPreset3840x2160;
-        case RNCameraVideo1080p:
-            return AVCaptureSessionPreset1920x1080;
-        case RNCameraVideo720p:
-            return AVCaptureSessionPreset1280x720;
-        case RNCameraVideo4x3:
-            return AVCaptureSessionPreset640x480;
-        case RNCameraVideo288p:
-            return AVCaptureSessionPreset352x288;
-        default:
-            return AVCaptureSessionPresetHigh;
-    }
-}
-
 + (UIImage *)convertBufferToUIImage:(CMSampleBufferRef)sampleBuffer previewSize:(CGSize)previewSize position:(NSInteger)position
 {
     CVImageBufferRef imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer);

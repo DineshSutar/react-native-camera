@@ -17,7 +17,6 @@
 
 // Enum conversions
 + (float)temperatureForWhiteBalance:(RNCameraWhiteBalance)whiteBalance;
-+ (NSString *)captureSessionPresetForVideoResolution:(RNCameraVideoResolution)resolution;
 + (AVCaptureVideoOrientation)videoOrientationForDeviceOrientation:(UIDeviceOrientation)orientation;
 + (AVCaptureVideoOrientation)videoOrientationForInterfaceOrientation:(UIInterfaceOrientation)orientation;
 

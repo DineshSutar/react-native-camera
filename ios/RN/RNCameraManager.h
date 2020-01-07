@@ -47,18 +47,6 @@ typedef NS_ENUM(NSInteger, RNCameraExposureMode) {
     RNCameraExposureCustom = AVCaptureExposureModeCustom,
 };
 
-typedef NS_ENUM(NSInteger, RNCameraVideoResolution) {
-    RNCameraVideo2160p = 0,
-    RNCameraVideo1080p = 1,
-    RNCameraVideo720p = 2,
-    RNCameraVideo4x3 = 3,
-    RNCameraVideo288p = 4,
-};
-
 @interface RNCameraManager : RCTViewManager <RCTBridgeModule>
-
-+ (NSDictionary *)validBarCodeTypes;
-+ (NSDictionary *)validCodecTypes;
-+ (NSDictionary *)validVideoStabilizationModes;
 
 @end
