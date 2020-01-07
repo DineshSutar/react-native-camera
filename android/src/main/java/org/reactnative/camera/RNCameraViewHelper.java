@@ -6,20 +6,21 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.media.CamcorderProfile;
 import android.os.Build;
-import androidx.exifinterface.media.ExifInterface;
 import android.view.ViewGroup;
+
+import androidx.exifinterface.media.ExifInterface;
+
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.ReactContext;
-import com.facebook.react.bridge.ReadableMapKeySetIterator;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableMap;
-import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.uimanager.UIManagerModule;
 import com.google.android.cameraview.CameraView;
-import com.google.zxing.Result;
-import org.reactnative.camera.events.*;
-import org.reactnative.barcodedetector.RNBarcodeDetector;
-import org.reactnative.facedetector.RNFaceDetector;
+
+import org.reactnative.camera.events.CameraMountErrorEvent;
+import org.reactnative.camera.events.CameraReadyEvent;
+import org.reactnative.camera.events.PictureSavedEvent;
+import org.reactnative.camera.events.PictureTakenEvent;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -217,84 +218,6 @@ public class RNCameraViewHelper {
         reactContext.getNativeModule(UIManagerModule.class).getEventDispatcher().dispatchEvent(event);
       }
      });
-  }
-
-  // Face detection events
-
-  public static void emitFacesDetectedEvent(final ViewGroup view, final WritableArray data) {
-
-    final ReactContext reactContext = (ReactContext) view.getContext();
-    reactContext.runOnNativeModulesQueueThread(new Runnable() {
-      @Override
-      public void run() {
-        FacesDetectedEvent event = FacesDetectedEvent.obtain(view.getId(), data);
-        reactContext.getNativeModule(UIManagerModule.class).getEventDispatcher().dispatchEvent(event);
-      }
-     });
-  }
-
-  public static void emitFaceDetectionErrorEvent(final ViewGroup view, final RNFaceDetector faceDetector) {
-
-    final ReactContext reactContext = (ReactContext) view.getContext();
-    reactContext.runOnNativeModulesQueueThread(new Runnable() {
-      @Override
-      public void run() {
-        FaceDetectionErrorEvent event = FaceDetectionErrorEvent.obtain(view.getId(), faceDetector);
-        reactContext.getNativeModule(UIManagerModule.class).getEventDispatcher().dispatchEvent(event);
-      }
-    });
-  }
-
-  // Barcode detection events
-
-  public static void emitBarcodesDetectedEvent(final ViewGroup view, final WritableArray barcodes) {
-
-    final ReactContext reactContext = (ReactContext) view.getContext();
-    reactContext.runOnNativeModulesQueueThread(new Runnable() {
-      @Override
-      public void run() {
-        BarcodesDetectedEvent event = BarcodesDetectedEvent.obtain(view.getId(), barcodes);
-        reactContext.getNativeModule(UIManagerModule.class).getEventDispatcher().dispatchEvent(event);
-      }
-    });
-  }
-
-  public static void emitBarcodeDetectionErrorEvent(final ViewGroup view, final RNBarcodeDetector barcodeDetector) {
-
-    final ReactContext reactContext = (ReactContext) view.getContext();
-    reactContext.runOnNativeModulesQueueThread(new Runnable() {
-      @Override
-      public void run() {
-        BarcodeDetectionErrorEvent event = BarcodeDetectionErrorEvent.obtain(view.getId(), barcodeDetector);
-        reactContext.getNativeModule(UIManagerModule.class).getEventDispatcher().dispatchEvent(event);
-      }
-    });
-  }
-
-  // Bar code read event
-
-  public static void emitBarCodeReadEvent(final ViewGroup view, final Result barCode, final int width, final int height) {
-    final ReactContext reactContext = (ReactContext) view.getContext();
-    reactContext.runOnNativeModulesQueueThread(new Runnable() {
-      @Override
-      public void run() {
-        BarCodeReadEvent event = BarCodeReadEvent.obtain(view.getId(), barCode, width,  height);
-        reactContext.getNativeModule(UIManagerModule.class).getEventDispatcher().dispatchEvent(event);
-      }
-    });
-  }
-
-  // Text recognition event
-
-  public static void emitTextRecognizedEvent(final ViewGroup view, final WritableArray data) {
-    final ReactContext reactContext = (ReactContext) view.getContext();
-    reactContext.runOnNativeModulesQueueThread(new Runnable() {
-      @Override
-      public void run() {
-        TextRecognizedEvent event = TextRecognizedEvent.obtain(view.getId(), data);
-        reactContext.getNativeModule(UIManagerModule.class).getEventDispatcher().dispatchEvent(event);
-      }
-    });
   }
 
   // Utilities

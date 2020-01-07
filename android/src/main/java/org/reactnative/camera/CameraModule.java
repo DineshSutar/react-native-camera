@@ -18,11 +18,8 @@ import com.facebook.react.uimanager.UIBlock;
 import com.facebook.react.uimanager.UIManagerModule;
 import com.google.android.cameraview.AspectRatio;
 import com.google.android.cameraview.Size;
-import com.google.zxing.BarcodeFormat;
 
-import org.reactnative.barcodedetector.BarcodeFormatUtils;
 import org.reactnative.camera.utils.ScopedContext;
-import org.reactnative.facedetector.RNFaceDetector;
 
 import java.io.File;
 import java.util.Collections;
@@ -46,40 +43,9 @@ public class CameraModule extends ReactContextBaseJavaModule {
   static final int VIDEO_480P = 3;
   static final int VIDEO_4x3 = 4;
 
-  static final int GOOGLE_VISION_BARCODE_MODE_NORMAL = 0;
-  static final int GOOGLE_VISION_BARCODE_MODE_ALTERNATE = 1;
-  static final int GOOGLE_VISION_BARCODE_MODE_INVERTED = 2;
-
-  public static final Map<String, Object> VALID_BARCODE_TYPES =
-      Collections.unmodifiableMap(new HashMap<String, Object>() {
-        {
-          put("aztec", BarcodeFormat.AZTEC.toString());
-          put("ean13", BarcodeFormat.EAN_13.toString());
-          put("ean8", BarcodeFormat.EAN_8.toString());
-          put("qr", BarcodeFormat.QR_CODE.toString());
-          put("pdf417", BarcodeFormat.PDF_417.toString());
-          put("upc_e", BarcodeFormat.UPC_E.toString());
-          put("datamatrix", BarcodeFormat.DATA_MATRIX.toString());
-          put("code39", BarcodeFormat.CODE_39.toString());
-          put("code93", BarcodeFormat.CODE_93.toString());
-          put("interleaved2of5", BarcodeFormat.ITF.toString());
-          put("codabar", BarcodeFormat.CODABAR.toString());
-          put("code128", BarcodeFormat.CODE_128.toString());
-          put("maxicode", BarcodeFormat.MAXICODE.toString());
-          put("rss14", BarcodeFormat.RSS_14.toString());
-          put("rssexpanded", BarcodeFormat.RSS_EXPANDED.toString());
-          put("upc_a", BarcodeFormat.UPC_A.toString());
-          put("upc_ean", BarcodeFormat.UPC_EAN_EXTENSION.toString());
-        }
-      });
-
   public CameraModule(ReactApplicationContext reactContext) {
     super(reactContext);
     mScopedContext = new ScopedContext(reactContext);
-  }
-
-  public ScopedContext getScopedContext() {
-    return mScopedContext;
   }
 
   @Override
@@ -97,48 +63,6 @@ public class CameraModule extends ReactContextBaseJavaModule {
         put("AutoFocus", getAutoFocusConstants());
         put("WhiteBalance", getWhiteBalanceConstants());
         put("ColorEffect", getColorEffectConstants());
-        put("VideoQuality", getVideoQualityConstants());
-        put("BarCodeType", getBarCodeConstants());
-        put("FaceDetection", Collections.unmodifiableMap(new HashMap<String, Object>() {
-          {
-            put("Mode", getFaceDetectionModeConstants());
-            put("Landmarks", getFaceDetectionLandmarksConstants());
-            put("Classifications", getFaceDetectionClassificationsConstants());
-          }
-
-          private Map<String, Object> getFaceDetectionModeConstants() {
-            return Collections.unmodifiableMap(new HashMap<String, Object>() {
-              {
-                put("fast", RNFaceDetector.FAST_MODE);
-                put("accurate", RNFaceDetector.ACCURATE_MODE);
-              }
-            });
-          }
-
-          private Map<String, Object> getFaceDetectionClassificationsConstants() {
-            return Collections.unmodifiableMap(new HashMap<String, Object>() {
-              {
-                put("all", RNFaceDetector.ALL_CLASSIFICATIONS);
-                put("none", RNFaceDetector.NO_CLASSIFICATIONS);
-              }
-            });
-          }
-
-          private Map<String, Object> getFaceDetectionLandmarksConstants() {
-            return Collections.unmodifiableMap(new HashMap<String, Object>() {
-              {
-                put("all", RNFaceDetector.ALL_LANDMARKS);
-                put("none", RNFaceDetector.NO_LANDMARKS);
-              }
-            });
-          }
-        }));
-        put("GoogleVisionBarcodeDetection", Collections.unmodifiableMap(new HashMap<String, Object>() {
-          {
-            put("BarcodeType", BarcodeFormatUtils.REVERSE_FORMATS);
-            put("BarcodeMode", getGoogleVisionBarcodeModeConstants());
-          }
-        }));
         put("Orientation", Collections.unmodifiableMap(new HashMap<String, Object>() {
             {
               put("auto", Constants.ORIENTATION_AUTO);
@@ -199,32 +123,6 @@ public class CameraModule extends ReactContextBaseJavaModule {
                   put("mono", Constants.CE_MONO);
               }
           });
-      }
-
-      private Map<String, Object> getVideoQualityConstants() {
-        return Collections.unmodifiableMap(new HashMap<String, Object>() {
-          {
-            put("2160p", VIDEO_2160P);
-            put("1080p", VIDEO_1080P);
-            put("720p", VIDEO_720P);
-            put("480p", VIDEO_480P);
-            put("4:3", VIDEO_4x3);
-          }
-        });
-      }
-
-      private Map<String, Object> getGoogleVisionBarcodeModeConstants() {
-        return Collections.unmodifiableMap(new HashMap<String, Object>() {
-          {
-            put("NORMAL", GOOGLE_VISION_BARCODE_MODE_NORMAL);
-            put("ALTERNATE", GOOGLE_VISION_BARCODE_MODE_ALTERNATE);
-            put("INVERTED", GOOGLE_VISION_BARCODE_MODE_INVERTED);
-          }
-        });
-      }
-
-      private Map<String, Object> getBarCodeConstants() {
-        return VALID_BARCODE_TYPES;
       }
     });
   }
@@ -292,52 +190,6 @@ public class CameraModule extends ReactContextBaseJavaModule {
           }
       }
     });
-  }
-
-  @ReactMethod
-  public void record(final ReadableMap options, final int viewTag, final Promise promise) {
-      final ReactApplicationContext context = getReactApplicationContext();
-      final File cacheDirectory = mScopedContext.getCacheDirectory();
-      UIManagerModule uiManager = context.getNativeModule(UIManagerModule.class);
-
-      uiManager.addUIBlock(new UIBlock() {
-          @Override
-          public void execute(NativeViewHierarchyManager nativeViewHierarchyManager) {
-              final RNCameraView cameraView;
-
-              try {
-                  cameraView = (RNCameraView) nativeViewHierarchyManager.resolveView(viewTag);
-                  if (cameraView.isCameraOpened()) {
-                      cameraView.record(options, promise, cacheDirectory);
-                  } else {
-                      promise.reject("E_CAMERA_UNAVAILABLE", "Camera is not running");
-                  }
-              } catch (Exception e) {
-                  promise.reject("E_CAPTURE_FAILED", e.getMessage());
-              }
-          }
-      });
-  }
-
-  @ReactMethod
-  public void stopRecording(final int viewTag) {
-      final ReactApplicationContext context = getReactApplicationContext();
-      UIManagerModule uiManager = context.getNativeModule(UIManagerModule.class);
-      uiManager.addUIBlock(new UIBlock() {
-          @Override
-          public void execute(NativeViewHierarchyManager nativeViewHierarchyManager) {
-              final RNCameraView cameraView;
-
-              try {
-                  cameraView = (RNCameraView) nativeViewHierarchyManager.resolveView(viewTag);
-                  if (cameraView.isCameraOpened()) {
-                      cameraView.stopRecording();
-                  }
-              } catch (Exception e) {
-                  e.printStackTrace();
-              }
-          }
-      });
   }
 
   @ReactMethod

@@ -18,25 +18,23 @@ package com.google.android.cameraview;
 
 import android.app.Activity;
 import android.content.Context;
-import android.graphics.Rect;
-import android.hardware.Camera;
+import android.graphics.SurfaceTexture;
 import android.media.CamcorderProfile;
 import android.os.Build;
-import android.os.HandlerThread;
 import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.util.AttributeSet;
+import android.view.View;
+import android.widget.FrameLayout;
+
 import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.os.ParcelableCompat;
 import androidx.core.os.ParcelableCompatCreatorCallbacks;
 import androidx.core.view.ViewCompat;
-import android.util.AttributeSet;
-import android.view.MotionEvent;
-import android.view.View;
-import android.widget.FrameLayout;
-import android.graphics.SurfaceTexture;
 
 import com.facebook.react.bridge.ReadableMap;
 
@@ -50,34 +48,52 @@ import java.util.SortedSet;
 
 public class CameraView extends FrameLayout {
 
-    /** The camera device faces the opposite direction as the device's screen. */
+    /**
+     * The camera device faces the opposite direction as the device's screen.
+     */
     public static final int FACING_BACK = Constants.FACING_BACK;
 
-    /** The camera device faces the same direction as the device's screen. */
+    /**
+     * The camera device faces the same direction as the device's screen.
+     */
     public static final int FACING_FRONT = Constants.FACING_FRONT;
 
-    /** Direction the camera faces relative to device screen. */
+    /**
+     * Direction the camera faces relative to device screen.
+     */
     @IntDef({FACING_BACK, FACING_FRONT})
     @Retention(RetentionPolicy.SOURCE)
     public @interface Facing {
     }
 
-    /** Flash will not be fired. */
+    /**
+     * Flash will not be fired.
+     */
     public static final int FLASH_OFF = Constants.FLASH_OFF;
 
-    /** Flash will always be fired during snapshot. */
+    /**
+     * Flash will always be fired during snapshot.
+     */
     public static final int FLASH_ON = Constants.FLASH_ON;
 
-    /** Constant emission of light during preview, auto-focus and snapshot. */
+    /**
+     * Constant emission of light during preview, auto-focus and snapshot.
+     */
     public static final int FLASH_TORCH = Constants.FLASH_TORCH;
 
-    /** Flash will be fired automatically when required. */
+    /**
+     * Flash will be fired automatically when required.
+     */
     public static final int FLASH_AUTO = Constants.FLASH_AUTO;
 
-    /** Flash will be fired in red-eye reduction mode. */
+    /**
+     * Flash will be fired in red-eye reduction mode.
+     */
     public static final int FLASH_RED_EYE = Constants.FLASH_RED_EYE;
 
-    /** The mode for for the camera device's flash control */
+    /**
+     * The mode for for the camera device's flash control
+     */
     @Retention(RetentionPolicy.SOURCE)
     @IntDef({FLASH_OFF, FLASH_ON, FLASH_TORCH, FLASH_AUTO, FLASH_RED_EYE})
     public @interface Flash {
@@ -115,7 +131,7 @@ public class CameraView extends FrameLayout {
         mBgHandler = new Handler(mBgThread.getLooper());
 
 
-        if (isInEditMode()){
+        if (isInEditMode()) {
             mCallbacks = null;
             mDisplayOrientationDetector = null;
             return;
@@ -144,22 +160,18 @@ public class CameraView extends FrameLayout {
         };
     }
 
-    public void cleanup(){
-        if(mBgThread != null){
-            mBgThread.quitSafely();
+    public void cleanup() {
+        if (mBgThread != null) {
+            if (Build.VERSION.SDK_INT >= 18) {
+                mBgThread.quitSafely();
+            }
             mBgThread = null;
         }
     }
 
     @NonNull
     private PreviewImpl createPreviewImpl(Context context) {
-        PreviewImpl preview;
-        if (Build.VERSION.SDK_INT < 14) {
-            preview = new SurfaceViewPreview(context, this);
-        } else {
-            preview = new TextureViewPreview(context, this);
-        }
-        return preview;
+        return new TextureViewPreview(context, this);
     }
 
     @Override
@@ -180,7 +192,7 @@ public class CameraView extends FrameLayout {
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        if (isInEditMode()){
+        if (isInEditMode()) {
             super.onMeasure(widthMeasureSpec, heightMeasureSpec);
             return;
         }
@@ -312,7 +324,7 @@ public class CameraView extends FrameLayout {
 
     /**
      * Open a camera device and start showing camera preview. This is typically called from
-     * {@link Activity#onResume()}.
+     * {@link Activity# onResume()}.
      */
     public void start() {
         if (!mImpl.start()) {
@@ -330,7 +342,7 @@ public class CameraView extends FrameLayout {
 
     /**
      * Stop camera preview and close the device. This is typically called from
-     * {@link Activity#onPause()}.
+     * {@link Activity# onPause()}.
      */
     public void stop() {
         mImpl.stop();
@@ -385,10 +397,10 @@ public class CameraView extends FrameLayout {
     }
 
     public View getView() {
-      if (mImpl != null) {
-        return mImpl.getView();
-      }
-      return null;
+        if (mImpl != null) {
+            return mImpl.getView();
+        }
+        return null;
     }
 
     /**
@@ -412,13 +424,13 @@ public class CameraView extends FrameLayout {
         return mImpl.getFacing();
     }
 
-     /**
+    /**
      * Chooses camera by its camera iD
      *
      * @param id The camera ID
      */
     public void setCameraId(String id) {
-      mImpl.setCameraId(id);
+        mImpl.setCameraId(id);
     }
 
     /**
@@ -427,7 +439,7 @@ public class CameraView extends FrameLayout {
      * @return The camera facing.
      */
     public String getCameraId() {
-      return mImpl.getCameraId();
+        return mImpl.getCameraId();
     }
 
     /**
@@ -563,22 +575,24 @@ public class CameraView extends FrameLayout {
         mImpl.setFocusDepth(value);
     }
 
-    public float getFocusDepth() { return mImpl.getFocusDepth(); }
+    public float getFocusDepth() {
+        return mImpl.getFocusDepth();
+    }
 
     public void setZoom(float zoom) {
-      mImpl.setZoom(zoom);
+        mImpl.setZoom(zoom);
     }
 
     public float getZoom() {
-      return mImpl.getZoom();
+        return mImpl.getZoom();
     }
 
     public void setWhiteBalance(int whiteBalance) {
-      mImpl.setWhiteBalance(whiteBalance);
+        mImpl.setWhiteBalance(whiteBalance);
     }
 
     public int getWhiteBalance() {
-      return mImpl.getWhiteBalance();
+        return mImpl.getWhiteBalance();
     }
 
     public void setColorEffect(int colorEffect) {
@@ -589,9 +603,13 @@ public class CameraView extends FrameLayout {
         return mImpl.getColorEffect();
     }
 
-    public void setScanning(boolean isScanning) { mImpl.setScanning(isScanning);}
+    public void setScanning(boolean isScanning) {
+        mImpl.setScanning(isScanning);
+    }
 
-    public boolean getScanning() { return mImpl.getScanning(); }
+    public boolean getScanning() {
+        return mImpl.getScanning();
+    }
 
     /**
      * Take a picture. The result will be returned to
@@ -604,10 +622,11 @@ public class CameraView extends FrameLayout {
     /**
      * Record a video and save it to file. The result will be returned to
      * {@link Callback#onVideoRecorded(CameraView, String, int, int)}.
-     * @param path Path to file that video will be saved to.
+     *
+     * @param path        Path to file that video will be saved to.
      * @param maxDuration Maximum duration of the recording, in seconds.
      * @param maxFileSize Maximum recording file size, in bytes.
-     * @param profile Quality profile of the recording.
+     * @param profile     Quality profile of the recording.
      */
     public boolean record(String path, int maxDuration, int maxFileSize,
                           boolean recordAudio, CamcorderProfile profile, int orientation) {
@@ -827,7 +846,8 @@ public class CameraView extends FrameLayout {
         public void onFramePreview(CameraView cameraView, byte[] data, int width, int height, int orientation) {
         }
 
-        public void onMountError(CameraView cameraView) {}
+        public void onMountError(CameraView cameraView) {
+        }
     }
 
 }
