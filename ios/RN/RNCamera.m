@@ -81,7 +81,10 @@ BOOL _sessionInterrupted = NO;
         self.isExposedOnPoint = NO;
         _recordRequested = NO;
         _sessionInterrupted = NO;
-
+        self.filteredImageView = [UIImageView new];
+        self.filteredImageView.transform = CGAffineTransformMakeRotation(M_PI_2);
+        self.grayImageFilter = [CIFilter filterWithName:@"CIPhotoEffectMono"]; // CIPhotoEffectNoir
+        
         // we will do other initialization after
         // the view is loaded.
         // This is to prevent code if the view is unused as react
@@ -146,8 +149,11 @@ BOOL _sessionInterrupted = NO;
 {
     [super layoutSubviews];
     self.previewLayer.frame = self.bounds;
+    self.filteredImageView.frame = self.bounds;
+    
     [self setBackgroundColor:[UIColor blackColor]];
-    [self.layer insertSublayer:self.previewLayer atIndex:0];
+//    [self.layer insertSublayer:self.previewLayer atIndex:0];
+    [self addSubview:self.filteredImageView];
 }
 
 - (void)insertReactSubview:(UIView *)view atIndex:(NSInteger)atIndex
@@ -755,22 +761,26 @@ BOOL _sessionInterrupted = NO;
 
 
                 // get JPEG image data
-                NSData *imageData = [AVCaptureStillImageOutput jpegStillImageNSDataRepresentation:imageSampleBuffer];
-                UIImage *takenImage = [UIImage imageWithData:imageData];
-
+//                NSData *imageData = [AVCaptureStillImageOutput jpegStillImageNSDataRepresentation:imageSampleBuffer];
+//                UIImage *takenImage = [UIImage imageWithData:imageData];
+                UIImage *takenImage = self.filteredImageView.image;
+                CGSize takenImgSize = takenImage.size;
+                CGRect cropRect = CGRectMake(0, 0, takenImgSize.width, takenImgSize.height);
+                
+                CIContext *context = [CIContext new];
+                takenImage = [UIImage imageWithCGImage:[context createCGImage:takenImage.CIImage fromRect:cropRect]];
 
                 // Adjust/crop image based on preview dimensions
                 // TODO: This seems needed because iOS does not allow
                 // for aspect ratio settings, so this is the best we can get
                 // to mimic android's behaviour.
-                CGImageRef takenCGImage = takenImage.CGImage;
                 CGSize previewSize;
                 if (UIInterfaceOrientationIsPortrait([[UIApplication sharedApplication] statusBarOrientation])) {
-                    previewSize = CGSizeMake(self.previewLayer.frame.size.height, self.previewLayer.frame.size.width);
+                    previewSize = CGSizeMake(self.filteredImageView.frame.size.height, self.filteredImageView.frame.size.width);
                 } else {
-                    previewSize = CGSizeMake(self.previewLayer.frame.size.width, self.previewLayer.frame.size.height);
+                    previewSize = CGSizeMake(self.filteredImageView.frame.size.width, self.filteredImageView.frame.size.height);
                 }
-                CGRect cropRect = CGRectMake(0, 0, CGImageGetWidth(takenCGImage), CGImageGetHeight(takenCGImage));
+                
                 CGRect croppedSize = AVMakeRectWithAspectRatioInsideRect(previewSize, cropRect);
                 takenImage = [RNImageUtils cropImage:takenImage toRect:croppedSize];
 
@@ -1190,7 +1200,7 @@ BOOL _sessionInterrupted = NO;
         // if session already running, also return and fire ready event
         // this is helpfu when the device type or ID is changed and we must
         // receive another ready event (like Android does)
-        if(self.session.isRunning){
+        if(self.session.isRunning) {
             [self onReady:nil];
             return;
         }
@@ -1218,10 +1228,11 @@ BOOL _sessionInterrupted = NO;
         // (see comment in -record), we go ahead and add the AVCaptureMovieFileOutput
         // to avoid an exposure rack on some devices that can cause the first few
         // frames of the recorded output to be underexposed.
-        if (![self.faceDetector isRealDetector] && ![self.textDetector isRealDetector] && ![self.barcodeDetector isRealDetector]) {
-            [self setupMovieFileCapture];
-        }
+//        if (![self.faceDetector isRealDetector] && ![self.textDetector isRealDetector] && ![self.barcodeDetector isRealDetector]) {
+//            [self setupMovieFileCapture];
+//        }
         [self setupOrDisableBarcodeScanner];
+        [self setupGrayFilter];
 
         _sessionInterrupted = NO;
         [self.session startRunning];
@@ -1844,6 +1855,27 @@ BOOL _sessionInterrupted = NO;
     }
 }
 
+- (void)setupGrayFilter
+{
+    AVCaptureSessionPreset preset = [self getDefaultPresetVideo];
+    self.session.sessionPreset = preset;
+    if (!self.videoDataOutput) {
+        self.videoDataOutput = [[AVCaptureVideoDataOutput alloc] init];
+        if (![self.session canAddOutput:_videoDataOutput]) {
+            NSLog(@"Failed to setup video data output");
+            return;
+        }
+
+//        NSDictionary *rgbOutputSettings = [NSDictionary
+//            dictionaryWithObject:[NSNumber numberWithInt:kCMPixelFormat_32BGRA]
+//                            forKey:(id)kCVPixelBufferPixelFormatTypeKey];
+//        [self.videoDataOutput setVideoSettings:rgbOutputSettings];
+        [self.videoDataOutput setAlwaysDiscardsLateVideoFrames:YES];
+        [self.videoDataOutput setSampleBufferDelegate:self queue:self.sessionQueue];
+        [self.session addOutput:_videoDataOutput];
+    }
+}
+
 - (void)mirrorVideo:(NSURL *)inputURL completion:(void (^)(NSURL* outputUR))completion {
     AVAsset* videoAsset = [AVAsset assetWithURL:inputURL];
     AVAssetTrack* clipVideoTrack = [[videoAsset tracksWithMediaType:AVMediaTypeVideo] firstObject];
@@ -2066,11 +2098,21 @@ BOOL _sessionInterrupted = NO;
     didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
            fromConnection:(AVCaptureConnection *)connection
 {
-    if (![self.textDetector isRealDetector] && ![self.faceDetector isRealDetector] && ![self.barcodeDetector isRealDetector]) {
-        NSLog(@"failing real check");
-        return;
-    }
-
+//    if (![self.textDetector isRealDetector] && ![self.faceDetector isRealDetector] && ![self.barcodeDetector isRealDetector]) {
+//        NSLog(@"failing real check");
+//        return;
+//    }
+    
+    CVImageBufferRef imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer);
+    CIImage *sourceImage = [CIImage imageWithCVPixelBuffer:(CVPixelBufferRef)imageBuffer options:nil];
+    [self.grayImageFilter setValue:sourceImage forKey:kCIInputImageKey];
+    CIImage *filteredImage = [self.grayImageFilter outputImage];
+    
+    dispatch_sync(dispatch_get_main_queue(), ^{
+        self.filteredImageView.image = [UIImage imageWithCIImage:filteredImage];
+    });
+    
+    
     // Do not submit image for text/face recognition too often:
     // 1. we only dispatch events every 500ms anyway
     // 2. wait until previous recognition is finished

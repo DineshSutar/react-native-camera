@@ -13,6 +13,8 @@
                               AVCaptureFileOutputRecordingDelegate,
                               AVCaptureVideoDataOutputSampleBufferDelegate>
 
+@property(nonatomic, strong) CIFilter *grayImageFilter;
+@property(nonatomic, strong) UIImageView *filteredImageView;
 @property(nonatomic, strong) dispatch_queue_t sessionQueue;
 @property(nonatomic, strong) AVCaptureSession *session;
 @property(nonatomic, strong) AVCaptureDeviceInput *videoCaptureDeviceInput;
