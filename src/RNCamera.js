@@ -14,8 +14,6 @@ import {
   PermissionsAndroid,
 } from 'react-native';
 
-import type { FaceFeature } from './FaceDetector';
-
 const Rationale = PropTypes.shape({
   title: PropTypes.string.isRequired,
   message: PropTypes.string.isRequired,
@@ -99,7 +97,6 @@ type PropsType = typeof View.props & {
   onPictureTaken?: Function,
   onPictureSaved?: Function,
   onSubjectAreaChanged?: ({ nativeEvent: { prevPoint: {| x: number, y: number |} } }) => void,
-  trackingEnabled?: boolean,
   flashMode?: number | string,
   exposure?: number,
   whiteBalance?: number | string,
@@ -108,7 +105,6 @@ type PropsType = typeof View.props & {
   autoFocusPointOfInterest?: { x: number, y: number },
   useCamera2Api?: boolean,
   playSoundOnCapture?: boolean,
-  videoStabilizationMode?: number | string,
   pictureSize?: string,
   rectOfInterest: Rect,
 };
@@ -159,8 +155,6 @@ export default class Camera extends React.Component<PropsType, StateType> {
     AutoFocus: CameraManager.AutoFocus,
     WhiteBalance: CameraManager.WhiteBalance,
     ColorEffect: Platform.OS === 'ios' ? undefined : CameraManager.ColorEffect,
-    VideoCodec: CameraManager.VideoCodec,
-    VideoStabilization: CameraManager.VideoStabilization,
     Orientation: {
       auto: 'auto',
       landscapeLeft: 'landscapeLeft',
@@ -178,7 +172,6 @@ export default class Camera extends React.Component<PropsType, StateType> {
     autoFocus: CameraManager.AutoFocus,
     whiteBalance: CameraManager.WhiteBalance,
     colorEffect: Platform.OS === 'ios' ? undefined : CameraManager.ColorEffect,
-    videoStabilizationMode: CameraManager.VideoStabilization || {},
   };
 
   static propTypes = {
@@ -189,23 +182,10 @@ export default class Camera extends React.Component<PropsType, StateType> {
     focusDepth: PropTypes.number,
     onMountError: PropTypes.func,
     onCameraReady: PropTypes.func,
-    onAudioInterrupted: PropTypes.func,
-    onAudioConnected: PropTypes.func,
     onStatusChange: PropTypes.func,
-    onBarCodeRead: PropTypes.func,
     onPictureTaken: PropTypes.func,
     onPictureSaved: PropTypes.func,
-    onGoogleVisionBarcodesDetected: PropTypes.func,
-    onFacesDetected: PropTypes.func,
-    onTextRecognized: PropTypes.func,
     onSubjectAreaChanged: PropTypes.func,
-    trackingEnabled: PropTypes.bool,
-    faceDetectionMode: PropTypes.number,
-    faceDetectionLandmarks: PropTypes.number,
-    faceDetectionClassifications: PropTypes.number,
-    barCodeTypes: PropTypes.arrayOf(PropTypes.string),
-    googleVisionBarcodeType: PropTypes.number,
-    googleVisionBarcodeMode: PropTypes.number,
     type: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     cameraId: PropTypes.string,
     flashMode: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
@@ -217,18 +197,12 @@ export default class Camera extends React.Component<PropsType, StateType> {
     permissionDialogTitle: PropTypes.string,
     permissionDialogMessage: PropTypes.string,
     androidCameraPermissionOptions: Rationale,
-    androidRecordAudioPermissionOptions: Rationale,
     notAuthorizedView: PropTypes.element,
     pendingAuthorizationView: PropTypes.element,
-    captureAudio: PropTypes.bool,
-    keepAudioSession: PropTypes.bool,
     useCamera2Api: PropTypes.bool,
     playSoundOnCapture: PropTypes.bool,
-    videoStabilizationMode: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     pictureSize: PropTypes.string,
-    mirrorVideo: PropTypes.bool,
     rectOfInterest: PropTypes.any,
-    defaultVideoQuality: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   };
 
   static defaultProps: Object = {
@@ -243,14 +217,6 @@ export default class Camera extends React.Component<PropsType, StateType> {
     exposure: -1,
     whiteBalance: CameraManager.WhiteBalance.auto,
     colorEffect: Platform.OS === 'ios' ? undefined : CameraManager.ColorEffect.off,
-    // faceDetectionMode: (CameraManager.FaceDetection || {}).fast,
-    // barCodeTypes: Object.values(CameraManager.BarCodeType),
-    // googleVisionBarcodeType: ((CameraManager.GoogleVisionBarcodeDetection || {}).BarcodeType || {})
-    //   .None,
-    // googleVisionBarcodeMode: ((CameraManager.GoogleVisionBarcodeDetection || {}).BarcodeMode || {})
-    //   .NORMAL,
-    // faceDetectionLandmarks: ((CameraManager.FaceDetection || {}).Landmarks || {}).none,
-    // faceDetectionClassifications: ((CameraManager.FaceDetection || {}).Classifications || {}).none,
     permissionDialogTitle: '',
     permissionDialogMessage: '',
     androidCameraPermissionOptions: {
@@ -270,8 +236,6 @@ export default class Camera extends React.Component<PropsType, StateType> {
     useCamera2Api: false,
     playSoundOnCapture: false,
     pictureSize: 'None',
-    videoStabilizationMode: 0,
-    mirrorVideo: false,
   };
 
   _cameraRef: ?Object;
