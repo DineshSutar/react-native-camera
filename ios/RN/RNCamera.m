@@ -56,6 +56,7 @@ BOOL _sessionInterrupted = NO;
         _sessionInterrupted = NO;
         self.filteredImageView = [UIImageView new];
         self.filteredImageView.transform = CGAffineTransformMakeRotation(M_PI_2);
+        self.filteredImageView.contentMode = UIViewContentModeScaleAspectFit;
         self.grayImageFilter = [CIFilter filterWithName:@"CIPhotoEffectMono"]; // CIPhotoEffectNoir
         
         // we will do other initialization after
@@ -710,8 +711,8 @@ BOOL _sessionInterrupted = NO;
                     previewSize = CGSizeMake(self.filteredImageView.frame.size.width, self.filteredImageView.frame.size.height);
                 }
                 
-                CGRect croppedSize = AVMakeRectWithAspectRatioInsideRect(previewSize, cropRect);
-                takenImage = [RNImageUtils cropImage:takenImage toRect:croppedSize];
+//                CGRect croppedSize = AVMakeRectWithAspectRatioInsideRect(previewSize, cropRect);
+//                takenImage = [RNImageUtils cropImage:takenImage toRect:croppedSize];
 
                 // apply other image settings
                 bool resetOrientation = NO;
