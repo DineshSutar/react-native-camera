@@ -129,6 +129,8 @@ class Camera1 extends CameraViewImpl implements MediaRecorder.OnInfoListener,
 
     private int mWhiteBalance;
 
+    private int mBrightness;
+
     private int mColorEffect;
 
     private boolean mIsScanning;
@@ -607,6 +609,16 @@ class Camera1 extends CameraViewImpl implements MediaRecorder.OnInfoListener,
     @Override
     public int getWhiteBalance() {
         return mWhiteBalance;
+    }
+
+    @Override
+    void setBrightness(int brightness) {
+        Log.e("CAMERA_1:: ", "Adjusting brightness is not currently supported for Camera1");
+    }
+
+    @Override
+    int getBrightness(){
+        return mBrightness;
     }
 
     @Override

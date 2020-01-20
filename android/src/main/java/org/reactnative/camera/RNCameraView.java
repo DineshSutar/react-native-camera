@@ -154,6 +154,7 @@ public class RNCameraView extends CameraView implements LifecycleEventListener, 
                     if ((mIsPaused && !isCameraOpened()) || mIsNew) {
                         mIsPaused = false;
                         mIsNew = false;
+                        stop();
                         start();
                     }
                 }

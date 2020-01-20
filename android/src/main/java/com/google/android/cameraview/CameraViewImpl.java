@@ -124,6 +124,10 @@ abstract class CameraViewImpl {
 
     abstract int getWhiteBalance();
 
+    abstract int getBrightness();
+
+    abstract void setBrightness(int brightness);
+
     abstract void setColorEffect(int colorEffect);
 
     abstract int getColorEffect();

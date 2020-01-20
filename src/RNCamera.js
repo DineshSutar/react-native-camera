@@ -100,6 +100,7 @@ type PropsType = typeof View.props & {
   flashMode?: number | string,
   exposure?: number,
   whiteBalance?: number | string,
+  brightness?: number,
   colorEffect?: number | string,
   autoFocus?: string | boolean | number,
   autoFocusPointOfInterest?: { x: number, y: number },
@@ -136,6 +137,7 @@ const CameraManager: Object = NativeModules.RNCameraManager ||
     },
     WhiteBalance: {},
     ColorEffect: {},
+    Brightness: {},
   };
 
 const EventThrottleMs = 500;
@@ -154,6 +156,7 @@ export default class Camera extends React.Component<PropsType, StateType> {
     FlashMode: CameraManager.FlashMode,
     AutoFocus: CameraManager.AutoFocus,
     WhiteBalance: CameraManager.WhiteBalance,
+    Brightness: CameraManager.Brightness,
     ColorEffect: Platform.OS === 'ios' ? undefined : CameraManager.ColorEffect,
     Orientation: {
       auto: 'auto',
@@ -171,6 +174,7 @@ export default class Camera extends React.Component<PropsType, StateType> {
     exposure: CameraManager.Exposure,
     autoFocus: CameraManager.AutoFocus,
     whiteBalance: CameraManager.WhiteBalance,
+    brightness: CameraManager.Brightness,
     colorEffect: Platform.OS === 'ios' ? undefined : CameraManager.ColorEffect,
   };
 
@@ -191,6 +195,7 @@ export default class Camera extends React.Component<PropsType, StateType> {
     flashMode: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     exposure: PropTypes.number,
     whiteBalance: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    brightness: PropTypes.number,
     colorEffect: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     autoFocus: PropTypes.oneOfType([PropTypes.string, PropTypes.number, PropTypes.bool]),
     autoFocusPointOfInterest: PropTypes.shape({ x: PropTypes.number, y: PropTypes.number }),
@@ -216,6 +221,7 @@ export default class Camera extends React.Component<PropsType, StateType> {
     flashMode: CameraManager.FlashMode.off,
     exposure: -1,
     whiteBalance: CameraManager.WhiteBalance.auto,
+    brightness: 50,
     colorEffect: Platform.OS === 'ios' ? undefined : CameraManager.ColorEffect.off,
     permissionDialogTitle: '',
     permissionDialogMessage: '',
@@ -233,7 +239,7 @@ export default class Camera extends React.Component<PropsType, StateType> {
         <ActivityIndicator size="small" />
       </View>
     ),
-    useCamera2Api: false,
+    useCamera2Api: true,
     playSoundOnCapture: false,
     pictureSize: 'None',
   };

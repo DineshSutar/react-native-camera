@@ -114,6 +114,11 @@ public class CameraViewManager extends ViewGroupManager<RNCameraView> {
     view.setWhiteBalance(whiteBalance);
   }
 
+  @ReactProp(name = "brightness")
+  public void setBrightness(RNCameraView view, int brightness) {
+    view.setBrightness(brightness);
+  }
+
   @ReactProp(name = "colorEffect")
   public void setColorEffect(RNCameraView view, int colorEffect) {
     view.setColorEffect(colorEffect);

@@ -40,6 +40,7 @@ import android.media.MediaRecorder;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.util.Range;
 import android.util.SparseIntArray;
 import android.view.Surface;
 
@@ -84,6 +85,16 @@ class Camera2 extends CameraViewImpl implements MediaRecorder.OnInfoListener, Me
      * Max preview height that is guaranteed by Camera2 API
      */
     private static final int MAX_PREVIEW_HEIGHT = 1080;
+
+    /**
+     * Max compensation range for brightness
+     */
+    private int MAX_BRIGHTNESS_COMPENSATION_RANGE = 100;
+
+    /**
+     * Min compensation range for brightness
+     */
+    private int MIN_BRIGHTNESS_COMPENSATION_RANGE = 0;
 
     private static final int FOCUS_AREA_SIZE_DEFAULT = 300;
 
@@ -135,6 +146,7 @@ class Camera2 extends CameraViewImpl implements MediaRecorder.OnInfoListener, Me
             updateWhiteBalance();
             updateColorEffect();
             updateZoom();
+            updateBrightness();
             try {
                 mCaptureSession.setRepeatingRequest(mPreviewRequestBuilder.build(),
                         mCaptureCallback, null);
@@ -261,6 +273,8 @@ class Camera2 extends CameraViewImpl implements MediaRecorder.OnInfoListener, Me
     private float mZoom;
 
     private int mWhiteBalance;
+
+    private int mBrightness;
 
     private int mColorEffect;
 
@@ -751,12 +765,12 @@ class Camera2 extends CameraViewImpl implements MediaRecorder.OnInfoListener, Me
                 }
                 for (String id : ids) {
                     CameraCharacteristics characteristics = mCameraManager.getCameraCharacteristics(id);
-                    Integer level = characteristics.get(
-                            CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL);
-                    if (level == null ||
-                            level == CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY) {
-                        continue;
-                    }
+//                    Integer level = characteristics.get(
+//                            CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL);
+//                    if (level == null ||
+//                            level == CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY) {
+//                        continue;
+//                    }
                     Integer internal = characteristics.get(CameraCharacteristics.LENS_FACING);
                     if (internal == null) {
                         throw new NullPointerException("Unexpected state: LENS_FACING null");
@@ -770,12 +784,12 @@ class Camera2 extends CameraViewImpl implements MediaRecorder.OnInfoListener, Me
                 // Not found
                 mCameraId = ids[0];
                 mCameraCharacteristics = mCameraManager.getCameraCharacteristics(mCameraId);
-                Integer level = mCameraCharacteristics.get(
-                        CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL);
-                if (level == null ||
-                        level == CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY) {
-                    return false;
-                }
+//                Integer level = mCameraCharacteristics.get(
+//                        CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL);
+//                if (level == null ||
+//                        level == CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY) {
+//                    return false;
+//                }
                 Integer internal = mCameraCharacteristics.get(CameraCharacteristics.LENS_FACING);
                 if (internal == null) {
                     throw new NullPointerException("Unexpected state: LENS_FACING null");
@@ -1155,6 +1169,60 @@ class Camera2 extends CameraViewImpl implements MediaRecorder.OnInfoListener, Me
                 mPreviewRequestBuilder.set(CaptureRequest.CONTROL_EFFECT_MODE, CaptureRequest.CONTROL_EFFECT_MODE_MONO);
                 break;
         }
+    }
+
+    @Override
+    void setBrightness(int brightness) {
+        if(mBrightness == brightness){
+            return;
+        }
+        int saved = mBrightness;
+        mBrightness = brightness;
+        if(mCaptureSession != null){
+            updateBrightness();
+            try{
+                mCaptureSession.setRepeatingRequest(mPreviewRequestBuilder.build(), mCaptureCallback, null);
+            }
+            catch(CameraAccessException e) {
+                mBrightness = saved; //Reverts back
+            }
+        }
+    }
+
+    public int getBrightnessValue() {
+        Range<Integer> controlAECompensationRange = mCameraCharacteristics.get(CameraCharacteristics.CONTROL_AE_COMPENSATION_RANGE);
+        if (controlAECompensationRange != null) {
+            MIN_BRIGHTNESS_COMPENSATION_RANGE = controlAECompensationRange.getLower();
+            MAX_BRIGHTNESS_COMPENSATION_RANGE = controlAECompensationRange.getUpper();
+        }
+        int absBRange = MAX_BRIGHTNESS_COMPENSATION_RANGE - MIN_BRIGHTNESS_COMPENSATION_RANGE;
+        int value = mPreviewRequestBuilder.get(CaptureRequest.CONTROL_AE_EXPOSURE_COMPENSATION);
+        return 100 * (value - MIN_BRIGHTNESS_COMPENSATION_RANGE) / absBRange;
+    }
+
+    @Override
+    int getBrightness(){
+//        double compensationStep = 0;
+//        Rational controlAECompensationStep = mCameraCharacteristics.get(CameraCharacteristics.CONTROL_AE_COMPENSATION_STEP);
+//        if (controlAECompensationStep != null) {
+//           compensationStep = controlAECompensationStep.doubleValue();
+//        }
+//        Log.e(TAG, "compensationStep:" + compensationStep);
+//        Log.e(TAG, "brightnessValue:" + getBrightnessValue());
+//        Log.e(TAG, "mBrightness: " + mBrightness);
+        return mBrightness;
+    }
+
+
+    void updateBrightness() {
+        Range<Integer> controlAECompensationRange = mCameraCharacteristics.get(CameraCharacteristics.CONTROL_AE_COMPENSATION_RANGE);
+        if (controlAECompensationRange != null) {
+            MIN_BRIGHTNESS_COMPENSATION_RANGE = controlAECompensationRange.getLower();
+            MAX_BRIGHTNESS_COMPENSATION_RANGE = controlAECompensationRange.getUpper();
+        }
+
+        int newBrightness = (int) (MIN_BRIGHTNESS_COMPENSATION_RANGE + (MAX_BRIGHTNESS_COMPENSATION_RANGE - MIN_BRIGHTNESS_COMPENSATION_RANGE) * (mBrightness / 100f));
+        mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_EXPOSURE_COMPENSATION, newBrightness);
     }
 
     /**
